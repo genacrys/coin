@@ -15,17 +15,10 @@ class CreateTickersTable extends Migration
     {
         Schema::create('tickers', function (Blueprint $table) {
             $table->increments('id');
+            $table->string('exchange');
             $table->string('pair');
-            $table->string('ask');
-            $table->string('bid');
-            $table->string('closed');
-            $table->string('volume');
             $table->string('price');
-            $table->string('trades');
-            $table->string('low');
-            $table->string('high');
-            $table->string('opening');
-            $table->float('threshold');
+            $table->string('threshold');
             $table->timestamps();
             $table->softDeletes();
         });

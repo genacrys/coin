@@ -12,30 +12,16 @@ class TickersTableSeeder extends Seeder
     public function run()
     {
         DB::table('tickers')->insert([
+            'exchange' => 'Kraken',
             'pair' => 'ETHJPY',
-            'ask' => '',            
-            'bid' => '',            
-            'closed' => '',            
-            'volume' => '',            
-            'price' => '',            
-            'trades' => '',            
-            'low' => '',            
-            'high' => '',            
-            'opening' => '',
-            'threshold' => 1.50,
+            'price' => '',
+            'threshold' => '2.00',
         ]);
         DB::table('tickers')->insert([
+            'exchange' => 'Kraken',
             'pair' => 'XBTJPY',
-            'ask' => '',
-            'bid' => '',
-            'closed' => '',
-            'volume' => '',
             'price' => '',
-            'trades' => '',
-            'low' => '',
-            'high' => '',
-            'opening' => '',
-            'threshold' => 1.50,
+            'threshold' => '2.00',
         ]);
     }
 }

@@ -6,12 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Ticker extends Model
 {
-    const DELIMITER = ', ';
-
-    public function compare(array $other, $field)
+    public function comparePrice($price)
     {
-       $thisValue = floatval(explode(self::DELIMITER, $this[$field])[0]);
-       $otherValue = floatval(explode(self::DELIMITER, $other[$field[0]])[0]);
-       return $otherValue > $thisValue ? $otherValue / $thisValue - 1 : 1 - $thisValue / $otherValue;
+       $thisPrice = floatval($this->price);
+       $otherPrice = floatval($price);
+       return $otherPrice > $thisPrice ? $otherPrice / $thisPrice - 1 : 1 - $thisPrice / $otherPrice;
     }
 }
