@@ -3,24 +3,22 @@
 namespace App\Console\Commands;
 
 use App\Models\Ticker;
-use App\Models\User;
-use Illuminate\Console\Command;
 
-class TrackTicker extends Command
+class TrackPrice extends BaseCommand
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'track:ticker';
+    protected $signature = 'track:price';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Track: Ticker';
+    protected $description = 'Track: Price';
 
     /**
      * Create a new command instance.
@@ -55,24 +53,20 @@ class TrackTicker extends Command
             }
             if ($ticker->price !== '') {
                 $change = $ticker->comparePrice($price);
-                if (abs($change) * 100 >= floatval($ticker->threshold)) { // Percentage
-                    $url = env('SLACK_WEBHOOK_URL', '');
-                    $text = $ticker->exchange . ': ' . $ticker->pair .
-                        '. Sentiment: ' . number_format($change * 100, 2) .
-                        '%. New price: ' . number_format(floatval($price), 2) . '.';
-                    $message = json_encode(array(
-                        'text' => $text
-                    ));
-                    $curl = curl_init($url);
-                    curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'POST');
-                    curl_setopt($curl, CURLOPT_POSTFIELDS, $message);
-                    curl_setopt($curl, CURLOPT_HTTPHEADER, array(
-                        'Content-Type: application/json',
-                        'Content-Length: ' . strlen($message)
-                    ));
-                    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-                    curl_exec($curl);
-                    curl_close($curl);
+                if (abs($change) * 100 >= floatval($ticker->price_threshold)) { // Percentage
+                    $text = $ticker->pair . ' (' . $ticker->exchange . '). '
+                        . 'Change: ' . number_format($change * 100, 2) . '%. '
+                        . 'New price: ' . number_format(floatval($price), 2) . '.';
+                    $attachments = [[
+                        'fallback' => $ticker->pair . '. '
+                            . number_format($change * 100, 2) . '%. '
+                            . number_format(floatval($price), 2) . '.',
+                        'text' => '`Price` *' . $ticker->pair . '* (_' . $ticker->exchange . '_). '
+                            . 'Change: _' . number_format($change * 100, 2) . '%_. '
+                            . 'New price: _' . number_format(floatval($price), 2) . '_.',
+                        'mrkdwn_in' => ['text'],
+                    ]];
+                    $this->sendSlackMessage($text);
                     $this->save($ticker, $price);
                 }
             } else {

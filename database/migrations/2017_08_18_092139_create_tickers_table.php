@@ -17,8 +17,9 @@ class CreateTickersTable extends Migration
             $table->increments('id');
             $table->string('exchange');
             $table->string('pair');
-            $table->string('price');
-            $table->string('threshold');
+            $table->string('price')->default('');
+            $table->string('price_threshold');
+            $table->string('macd_time_frame');
             $table->timestamps();
             $table->softDeletes();
         });

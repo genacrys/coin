@@ -13,7 +13,8 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        \App\Console\Commands\TrackTicker::class,
+        \App\Console\Commands\TrackPrice::class,
+        \App\Console\Commands\TrackMacd::class,
     ];
 
     /**
@@ -24,7 +25,12 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('track:ticker')->everyMinute();
+        if (env('TRACK_PRICE', true)) {
+            $schedule->command('track:price')->cron('5,10,15,20,25,35,40,45,50,55 * * * *');
+        }
+        if (env('TRACK_MACD', true)) {
+            $schedule->command('track:macd')->everyFiveMinutes();
+        }
     }
 
     /**
