@@ -37,47 +37,24 @@ class TrackPrice extends BaseCommand
      */
     public function handle()
     {
+        $result = json_decode(file_get_contents('https://api.cryptowat.ch/markets/prices'), true)['result'];
         foreach (Ticker::all() as $ticker) {
-            $price = '0';
-            if ($ticker->exchange == 'Kraken') {
-                $data = json_decode(file_get_contents('https://api.kraken.com/0/public/Ticker?pair=' . $ticker->pair), true);
-                $price = reset($data['result'])['c'][0];
-            } else if ($ticker->exchange == 'Bitfinex') {
-                $data = json_decode(file_get_contents('https://api.bitfinex.com/v2/ticker/t' . $ticker->pair), true);
-                $price = $data[6];
-            } else if ($ticker->exchange == 'Bitflyer') {
-                $data = json_decode(file_get_contents('https://lightning.bitflyer.jp/api/market/statistics?account_id=&lang=en&v=1'), true);
-                $price = $data[$ticker->pair]['LTP'];
-            } else {
-                continue;
-            }
+            $price = $result[strtolower($ticker->exchange) . ':' . strtolower(str_replace('_', '', $ticker->pair))];
             if ($ticker->price !== '') {
                 $change = $ticker->comparePrice($price);
+                $priceSentiment = $change > 0 ? Ticker::BULLISH : Ticker::BEARISH;
                 if (abs($change) * 100 >= floatval($ticker->price_threshold)) { // Percentage
-                    $text = $ticker->pair . ' (' . $ticker->exchange . '). '
-                        . 'Change: ' . number_format($change * 100, 2) . '%. '
-                        . 'New price: ' . number_format(floatval($price), 2) . '.';
-                    $attachments = [[
-                        'fallback' => $ticker->pair . '. '
-                            . number_format($change * 100, 2) . '%. '
-                            . number_format(floatval($price), 2) . '.',
-                        'text' => '`Price` *' . $ticker->pair . '* (_' . $ticker->exchange . '_). '
-                            . 'Change: _' . number_format($change * 100, 2) . '%_. '
-                            . 'New price: _' . number_format(floatval($price), 2) . '_.',
-                        'mrkdwn_in' => ['text'],
-                    ]];
-                    $this->sendSlackMessage($text);
-                    $this->save($ticker, $price);
+                    if ($priceSentiment != $ticker->price_sentiment) {
+                        $text = $ticker->pair . ' (' . $ticker->exchange . '). '
+                            . 'Sentiment: ' . $priceSentiment . '. '
+                            . 'New price: ' . number_format(floatval($price), 2) . '.';
+                        $this->sendSlackMessage($text);
+                    }
+                    $ticker->savePrice($price, $priceSentiment);
                 }
             } else {
-                $this->save($ticker, $price);
+                $ticker->savePrice($price, '');
             }
         }
-    }
-
-    private function save($ticker, $price)
-    {
-        $ticker->price = $price;
-        $ticker->save();
     }
 }

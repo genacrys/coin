@@ -13,51 +13,51 @@ class TickersTableSeeder extends Seeder
     {
         DB::table('tickers')->insert([
             'exchange' => 'Bitflyer',
-            'pair' => 'BTC_JPY',
+            'pair' => 'BTCFXJPY',
             'price_threshold' => '2.00',
-            'macd_time_frame' => '3600',
+            'macd_time_frame' => '7200',
         ]);
         DB::table('tickers')->insert([
             'exchange' => 'Bitfinex',
             'pair' => 'BTCUSD',
             'price_threshold' => '2.00',
-            'macd_time_frame' => '3600',
+            'macd_time_frame' => '7200',
         ]);
         DB::table('tickers')->insert([
             'exchange' => 'Bitfinex',
             'pair' => 'ETHUSD',
             'price_threshold' => '2.00',
-            'macd_time_frame' => '3600',
+            'macd_time_frame' => '7200',
         ]);
         DB::table('tickers')->insert([
             'exchange' => 'Bitfinex',
             'pair' => 'BCHUSD',
-            'price_threshold' => '4.00',
-            'macd_time_frame' => '3600',
+            'price_threshold' => '2.00',
+            'macd_time_frame' => '7200',
         ]);
         DB::table('tickers')->insert([
             'exchange' => 'Bitfinex',
             'pair' => 'LTCUSD',
-            'price_threshold' => '4.00',
-            'macd_time_frame' => '3600',
-        ]);
-        DB::table('tickers')->insert([
-            'exchange' => 'Bitfinex',
-            'pair' => 'XMRUSD',
-            'price_threshold' => '6.00',
-            'macd_time_frame' => '3600',
+            'price_threshold' => '2.00',
+            'macd_time_frame' => '7200',
         ]);
         DB::table('tickers')->insert([
             'exchange' => 'Bitfinex',
             'pair' => 'XRPUSD',
-            'price_threshold' => '6.00',
-            'macd_time_frame' => '3600',
+            'price_threshold' => '2.00',
+            'macd_time_frame' => '7200',
+        ]);
+        DB::table('tickers')->insert([
+            'exchange' => 'Bitfinex',
+            'pair' => 'XMRUSD',
+            'price_threshold' => '2.00',
+            'macd_time_frame' => '7200',
         ]);
         DB::table('tickers')->insert([
             'exchange' => 'Bitfinex',
             'pair' => 'IOTUSD',
-            'price_threshold' => '6.00',
-            'macd_time_frame' => '3600',
+            'price_threshold' => '2.00',
+            'macd_time_frame' => '7200',
         ]);
     }
 }

@@ -72,7 +72,8 @@ class TrackMacd extends BaseCommand
         }
     }
 
-    private function calculateMacdHistograms($ticker) {
+    private function calculateMacdHistograms($ticker)
+    {
         // Get data
         $candles = json_decode(file_get_contents(
             'https://api.cryptowat.ch/markets/'
@@ -88,28 +89,25 @@ class TrackMacd extends BaseCommand
         $calculateSma = function($prices, $start, $end) {
             $sma = 0;
             for ($i = $start; $i <= $end; $i++) {
-                $sma += floatval($prices[$i]);
+                $sma += floatval($prices[$i]['value']);
             }
             return $sma;
         };
         // Fast length and Slow length Emas
-        $fast = $calculateSma($candles, self::FAST_PERIOD - 1, self::SLOW_PERIOD - 1);
-        $slow = $calculateSma($candles, 0, self::SLOW_PERIOD - 1);
+        $prices = array_map(function ($c) { return ['time' => $c[0], 'value' => $c[4]]; }, $candles); // Get closes
+        $fast = $calculateSma($prices, self::FAST_PERIOD - 1, self::SLOW_PERIOD - 1);
+        $slow = $calculateSma($prices, 0, self::SLOW_PERIOD - 1);
         $macds = [];
-        foreach (array_slice($candles, self::SLOW_PERIOD) as $candle) {
-            $price = $candle[4]; // Get close
-            $fast = ($price - $fast) * $fastMultiplier + $fast;
-            $slow = ($price - $slow) * $slowMultiplier + $slow;
+        foreach (array_slice($prices, self::SLOW_PERIOD) as $price) {
+            $fast = ($price['value'] - $fast) * $fastMultiplier + $fast;
+            $slow = ($price['value'] - $slow) * $slowMultiplier + $slow;
             $macds[] = [
-                'time' => $candle[0],
+                'time' => $price['time'],
                 'value' => $fast - $slow,
             ];
         }
         // Signal smoothing Ema
-        $signal = $calculateSma(
-            array_map(function ($m) { return $m['value']; }, $macds),
-            0, self::SIGNAL_PERIOD - 1
-        );
+        $signal = $calculateSma($macds, 0, self::SIGNAL_PERIOD - 1);
         $macdHistograms = [];
         foreach (array_slice($macds, self::SIGNAL_PERIOD) as $macd) {
             $signal = ($macd['value'] - $signal) * $signalMultiplier + $signal;
