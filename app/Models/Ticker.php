@@ -8,6 +8,8 @@ class Ticker extends Model
 {
     const BULLISH = 'Bullish';
     const BEARISH = 'Bearish';
+    const THRESHOLD = '8.00';
+    const TIME_FRAME = '';
 
     public function savePrice($price, $priceSentiment)
     {
@@ -18,8 +20,11 @@ class Ticker extends Model
 
     public function comparePrice($price)
     {
-       $thisPrice = floatval($this->price);
-       $otherPrice = floatval($price);
-       return $otherPrice > $thisPrice ? $otherPrice / $thisPrice - 1 : 1 - $thisPrice / $otherPrice;
+        $thisPrice = floatval($this->price);
+        $otherPrice = floatval($price);
+        if ($thisPrice == 0) {
+            return $otherPrice == 0 ? 0 : ($otherPrice > 0 ? INF : - INF);
+        }
+        return $otherPrice > $thisPrice ? $otherPrice / $thisPrice - 1 : 1 - $thisPrice / $otherPrice;
     }
 }

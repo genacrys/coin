@@ -42,6 +42,9 @@ class BaseCommand extends Command
     protected function sendSlackMessage($text, $attachments = [])
     {
         $url = env('SLACK_WEBHOOK_URL', '');
+        if ($url == '') {
+            return;
+        }
         $message = json_encode(array(
             'text' => $text,
             'mrkdwn' => true,

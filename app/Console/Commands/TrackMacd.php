@@ -44,6 +44,9 @@ class TrackMacd extends BaseCommand
     {
         foreach (Ticker::all() as $ticker) {
             // Get only last 3 histograms
+            if ($ticker['macd_time_frame'] == '') {
+                continue;
+            }
             $lastHistograms = array_slice($this->calculateMacdHistograms($ticker), -3, 3);
             $lastDifferences = array_map(function ($h) { return $h['macd'] - $h['signal']; }, $lastHistograms);
             if (time() - $lastHistograms[2]['time'] < self::SCHEDULE_FREQUENCY) {
@@ -55,11 +58,11 @@ class TrackMacd extends BaseCommand
                     $momentum = $lastHistograms[2]['macd'] > 0; // Upside or Downside
                     $direction = $lastDifferences[2] > 0; // Increasing or Decreasing
                     $attachments = [[
-                        'fallback' => $ticker->pair . '. '
+                        'fallback' => strtoupper($ticker['pair']) . '. '
                             . ($isCrossover ? 'Crossover' : 'Divergence') . '. '
                             . ($momentum ? 'Upside' : 'Downside') . '. '
                             . ($direction ? 'Increasing' : 'Decreasing') . '.',
-                        'text' => '*' . $ticker->pair . '* (_' . $ticker->exchange . '_). '
+                        'text' => '*' . strtoupper($ticker['pair']) . '* (_' . ucfirst($ticker['exchange']) . '_). '
                             . 'Form: _' . ($isCrossover ? 'Crossover' : 'Divergence') . '_. '
                             . 'Momentum: ' . ($momentum ? '🔼' : '🔽') . '. '
                             . 'Direction: ' . ($direction ? '🔼' : '🔽') . '.',
@@ -77,11 +80,11 @@ class TrackMacd extends BaseCommand
         // Get data
         $candles = json_decode(file_get_contents(
             'https://api.cryptowat.ch/markets/'
-            . strtolower($ticker->exchange) . '/'
-            . strtolower(str_replace('_', '', $ticker->pair)) . '/ohlc'
-            . '?periods=' . $ticker->macd_time_frame
+            . $ticker['exchange'] . '/'
+            . $ticker['pair'] . '/ohlc'
+            . '?periods=' . $ticker['macd_time_frame']
             . '&before=' . time()
-        ), true)['result'][$ticker->macd_time_frame];
+        ), true)['result'][$ticker['macd_time_frame']];
         // Initialize
         $fastMultiplier = 2 / (self::FAST_PERIOD + 1);
         $slowMultiplier = 2 / (self::SLOW_PERIOD + 1);

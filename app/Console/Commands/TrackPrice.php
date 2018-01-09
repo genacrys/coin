@@ -39,15 +39,15 @@ class TrackPrice extends BaseCommand
     {
         $result = json_decode(file_get_contents('https://api.cryptowat.ch/markets/prices'), true)['result'];
         foreach (Ticker::all() as $ticker) {
-            $price = $result[strtolower($ticker->exchange) . ':' . strtolower(str_replace('_', '', $ticker->pair))];
-            if ($ticker->price !== '') {
+            $price = $result[$ticker['exchange'] . ':' . $ticker['pair']];
+            if ($ticker['price'] !== '') {
                 $change = $ticker->comparePrice($price);
-                $priceSentiment = $change > 0 ? Ticker::BULLISH : Ticker::BEARISH;
-                if (abs($change) * 100 >= floatval($ticker->price_threshold)) { // Percentage
-                    if ($priceSentiment != $ticker->price_sentiment) {
-                        $text = $ticker->pair . ' (' . $ticker->exchange . '). '
+                if (abs($change) * 100 >= floatval($ticker['price_threshold'])) { // Percentage
+                    $priceSentiment = $change > 0 ? Ticker::BULLISH : Ticker::BEARISH;
+                    if ($priceSentiment != $ticker['price_sentiment']) {
+                        $text = strtoupper($ticker['pair']) . ' (' . ucfirst($ticker['exchange']) . '). '
                             . 'Sentiment: ' . $priceSentiment . '. '
-                            . 'New price: ' . number_format(floatval($price), 2) . '.';
+                            . 'New price: ' . $price . '.';
                         $this->sendSlackMessage($text);
                     }
                     $ticker->savePrice($price, $priceSentiment);

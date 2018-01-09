@@ -11,53 +11,13 @@ class TickersTableSeeder extends Seeder
      */
     public function run()
     {
-        DB::table('tickers')->insert([
-            'exchange' => 'Bitflyer',
-            'pair' => 'BTCFXJPY',
-            'price_threshold' => '2.00',
-            'macd_time_frame' => '7200',
-        ]);
-        DB::table('tickers')->insert([
-            'exchange' => 'Bitfinex',
-            'pair' => 'BTCUSD',
-            'price_threshold' => '2.00',
-            'macd_time_frame' => '7200',
-        ]);
-        DB::table('tickers')->insert([
-            'exchange' => 'Bitfinex',
-            'pair' => 'ETHUSD',
-            'price_threshold' => '2.00',
-            'macd_time_frame' => '7200',
-        ]);
-        DB::table('tickers')->insert([
-            'exchange' => 'Bitfinex',
-            'pair' => 'BCHUSD',
-            'price_threshold' => '2.00',
-            'macd_time_frame' => '7200',
-        ]);
-        DB::table('tickers')->insert([
-            'exchange' => 'Bitfinex',
-            'pair' => 'LTCUSD',
-            'price_threshold' => '2.00',
-            'macd_time_frame' => '7200',
-        ]);
-        DB::table('tickers')->insert([
-            'exchange' => 'Bitfinex',
-            'pair' => 'XRPUSD',
-            'price_threshold' => '2.00',
-            'macd_time_frame' => '7200',
-        ]);
-        DB::table('tickers')->insert([
-            'exchange' => 'Bitfinex',
-            'pair' => 'XMRUSD',
-            'price_threshold' => '2.00',
-            'macd_time_frame' => '7200',
-        ]);
-        DB::table('tickers')->insert([
-            'exchange' => 'Bitfinex',
-            'pair' => 'IOTUSD',
-            'price_threshold' => '2.00',
-            'macd_time_frame' => '7200',
-        ]);
+        $tickers = json_decode(File::get('database/data/tickers.json'));
+        foreach ($tickers as $ticker) {
+            $market = explode(':', $ticker);
+            DB::table('tickers')->insert([
+                'exchange' => $market[0],
+                'pair' => $market[1],
+            ]);
+        }
     }
 }
