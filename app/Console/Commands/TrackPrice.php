@@ -42,14 +42,12 @@ class TrackPrice extends BaseCommand
             $price = $result[$ticker['exchange'] . ':' . $ticker['pair']];
             if ($ticker['price'] !== '') {
                 $change = $ticker->comparePrice($price);
-                if (abs($change) * 100 >= floatval($ticker['price_threshold'])) { // Percentage
+                if (abs($change) * 100 >= floatval($ticker['price_variation'])) { // Percentage
                     $priceSentiment = $change > 0 ? Ticker::BULLISH : Ticker::BEARISH;
-                    if ($priceSentiment != $ticker['price_sentiment']) {
-                        $text = strtoupper($ticker['pair']) . ' (' . ucfirst($ticker['exchange']) . '). '
-                            . 'Sentiment: ' . $priceSentiment . '. '
-                            . 'New price: ' . $price . '.';
-                        $this->sendSlackMessage($text);
-                    }
+                    $text = strtoupper($ticker['pair']) . ' (' . ucfirst($ticker['exchange']) . '). '
+                        . 'Sentiment: ' . $priceSentiment . '. '
+                        . 'New price: ' . $price . '.';
+                    $this->sendSlackMessage($text);
                     $ticker->savePrice($price, $priceSentiment);
                 }
             } else {

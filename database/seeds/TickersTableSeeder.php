@@ -13,10 +13,11 @@ class TickersTableSeeder extends Seeder
     {
         $tickers = json_decode(File::get('database/data/tickers.json'));
         foreach ($tickers as $ticker) {
-            $market = explode(':', $ticker);
             DB::table('tickers')->insert([
-                'exchange' => $market[0],
-                'pair' => $market[1],
+                'exchange' => $ticker[0],
+                'pair' => $ticker[1],
+                'price_variation' => $ticker[2],
+                'macd_time_frames' => $ticker[3],
             ]);
         }
     }

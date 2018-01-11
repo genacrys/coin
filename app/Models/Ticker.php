@@ -8,8 +8,7 @@ class Ticker extends Model
 {
     const BULLISH = 'Bullish';
     const BEARISH = 'Bearish';
-    const THRESHOLD = '8.00';
-    const TIME_FRAME = '';
+    const DELIMITER = ',';
 
     public function savePrice($price, $priceSentiment)
     {

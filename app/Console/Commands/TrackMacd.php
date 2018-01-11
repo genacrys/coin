@@ -6,7 +6,7 @@ use App\Models\Ticker;
 
 class TrackMacd extends BaseCommand
 {
-    const SCHEDULE_FREQUENCY = 5 * 60; // @see: Kernel->schedule
+    const SCHEDULE_FREQUENCY = 30 * 60; // In seconds, @see: Kernel->schedule
     const FAST_PERIOD = 12; // Fast length period
     const SLOW_PERIOD = 26; // Slow length period
     const SIGNAL_PERIOD = 9; // Signal smoothing period
@@ -43,30 +43,24 @@ class TrackMacd extends BaseCommand
     public function handle()
     {
         foreach (Ticker::all() as $ticker) {
-            // Get only last 3 histograms
-            if ($ticker['macd_time_frame'] == '') {
+            if ($ticker['macd_time_frames'] == '') {
                 continue;
             }
-            $lastHistograms = array_slice($this->calculateMacdHistograms($ticker), -3, 3);
-            $lastDifferences = array_map(function ($h) { return $h['macd'] - $h['signal']; }, $lastHistograms);
-            if (time() - $lastHistograms[2]['time'] < self::SCHEDULE_FREQUENCY) {
-                $isCrossover = $lastDifferences[1] * $lastDifferences[2] < 0;
-                $isDivergence = ($lastDifferences[0] * $lastDifferences[1] < 0)
-                    && ($lastDifferences[1] * $lastDifferences[2] > 0)
-                    && (abs($lastDifferences[1]) < abs($lastDifferences[2]));
-                if ($isCrossover || $isDivergence) {
-                    $momentum = $lastHistograms[2]['macd'] > 0; // Upside or Downside
-                    $direction = $lastDifferences[2] > 0; // Increasing or Decreasing
+            $data = $this->fetchData($ticker);
+            $intervalCount = env('MONOTONIC_INTERVAL_COUNT', 0);
+            $lastShortHistograms = array_slice($this->calculateMacdHistograms($data[0]), - $intervalCount, $intervalCount);
+            if (time() - $lastShortHistograms[$intervalCount - 1]['time'] < self::SCHEDULE_FREQUENCY) {
+                $lastDifferences = array_map(function ($h) { return $h['macd'] - $h['signal']; }, $lastShortHistograms);
+                $direction = $this->checkMonotonicity($lastDifferences);
+                if ($direction !== null) {
+                    $lastLongHistogram = array_slice($this->calculateMacdHistograms($data[1]), - 1, 1)[0];
+                    $momentum = $lastLongHistogram['macd'] - $lastLongHistogram['signal'] > 0;
                     $attachments = [[
                         'fallback' => strtoupper($ticker['pair']) . '. '
-                            . ($isCrossover ? 'Crossover' : 'Divergence') . '. '
-                            . ($momentum ? 'Upside' : 'Downside') . '. '
                             . ($direction ? 'Increasing' : 'Decreasing') . '.',
                         'text' => '*' . strtoupper($ticker['pair']) . '* (_' . ucfirst($ticker['exchange']) . '_). '
-                            . 'Form: _' . ($isCrossover ? 'Crossover' : 'Divergence') . '_. '
-                            . 'Momentum: ' . ($momentum ? '🔼' : '🔽') . '. '
                             . 'Direction: ' . ($direction ? '🔼' : '🔽') . '.',
-                        'color' => ($momentum != $direction) ? ($direction ? 'good' : 'danger') : 'warning',
+                        'color' => ($momentum == $direction) ? ($direction ? 'good' : 'danger') : 'warning',
                         'mrkdwn_in' => ['text'],
                     ]];
                     $this->sendSlackMessage('', $attachments);
@@ -75,31 +69,46 @@ class TrackMacd extends BaseCommand
         }
     }
 
-    private function calculateMacdHistograms($ticker)
+    /**
+     * @return boolean|null `null` if not monotonic at all, `true` if monotonically increasing or `false` if monotonically decreasing
+     */
+    private function checkMonotonicity($interval)
     {
-        // Get data
-        $candles = json_decode(file_get_contents(
+        $monotonicity = null; // Not monotonic
+        $count = count($interval);
+        if ($count < 2) {
+            return null;
+        }
+        for ($i = 0; $i <= count($interval) - 2; $i++) {
+            $m = ($interval[$i + 1] > $interval[$i]) ? true : false;
+            $monotonicity = ($i == 0) ? $m : ($monotonicity == $m ? $monotonicity : null);
+        }
+        return $monotonicity;
+    }
+
+    private function fetchData($ticker)
+    {
+        $timeFrames = explode(Ticker::DELIMITER, $ticker['macd_time_frames']);
+        $result = json_decode(file_get_contents(
             'https://api.cryptowat.ch/markets/'
             . $ticker['exchange'] . '/'
             . $ticker['pair'] . '/ohlc'
-            . '?periods=' . $ticker['macd_time_frame']
+            . '?periods=' . $timeFrames[0] . ',' . $timeFrames[1]
             . '&before=' . time()
-        ), true)['result'][$ticker['macd_time_frame']];
+        ), true)['result'];
+        return [$result[$timeFrames[0]], $result[$timeFrames[1]]];
+    }
+
+    private function calculateMacdHistograms($candles)
+    {
         // Initialize
         $fastMultiplier = 2 / (self::FAST_PERIOD + 1);
         $slowMultiplier = 2 / (self::SLOW_PERIOD + 1);
         $signalMultiplier = 2 / (self::SIGNAL_PERIOD + 1);
-        $calculateSma = function($prices, $start, $end) {
-            $sma = 0;
-            for ($i = $start; $i <= $end; $i++) {
-                $sma += floatval($prices[$i]['value']);
-            }
-            return $sma;
-        };
         // Fast length and Slow length Emas
         $prices = array_map(function ($c) { return ['time' => $c[0], 'value' => $c[4]]; }, $candles); // Get closes
-        $fast = $calculateSma($prices, self::FAST_PERIOD - 1, self::SLOW_PERIOD - 1);
-        $slow = $calculateSma($prices, 0, self::SLOW_PERIOD - 1);
+        $fast = $this->calculateSma($prices, self::FAST_PERIOD - 1, self::SLOW_PERIOD - 1);
+        $slow = $this->calculateSma($prices, 0, self::SLOW_PERIOD - 1);
         $macds = [];
         foreach (array_slice($prices, self::SLOW_PERIOD) as $price) {
             $fast = ($price['value'] - $fast) * $fastMultiplier + $fast;
@@ -110,7 +119,7 @@ class TrackMacd extends BaseCommand
             ];
         }
         // Signal smoothing Ema
-        $signal = $calculateSma($macds, 0, self::SIGNAL_PERIOD - 1);
+        $signal = $this->calculateSma($macds, 0, self::SIGNAL_PERIOD - 1);
         $macdHistograms = [];
         foreach (array_slice($macds, self::SIGNAL_PERIOD) as $macd) {
             $signal = ($macd['value'] - $signal) * $signalMultiplier + $signal;
@@ -122,5 +131,14 @@ class TrackMacd extends BaseCommand
         }
         // Return
         return $macdHistograms;
+    }
+
+    private function calculateSma($prices, $start, $end)
+    {
+        $sma = 0;
+        for ($i = $start; $i <= $end; $i++) {
+            $sma += floatval($prices[$i]['value']);
+        }
+        return $sma;
     }
 }

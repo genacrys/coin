@@ -26,10 +26,10 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         if (env('TRACK_PRICE', true)) {
-            $schedule->command('track:price')->cron('5,10,15,20,25,35,40,45,50,55 * * * *');
+            $schedule->command('track:price')->everyFiveMinutes();
         }
         if (env('TRACK_MACD', true)) {
-            $schedule->command('track:macd')->everyFiveMinutes();
+            $schedule->command('track:macd')->everyThirtyMinutes();
         }
     }
 
