@@ -1,0 +1,16 @@
+[
+    ["bitflyer", "btcfxjpy", "2", "3600,14400"],
+    ["bitfinex", "btcusd", "2", "3600,14400"],
+    ["bitfinex", "ethusd", "2", "3600,14400"],
+    ["bitfinex", "xrpusd", "2", "3600,14400"],
+    ["bitfinex", "bchusd", "2", "3600,14400"],
+    ["bitfinex", "ltcusd", "2", "3600,14400"],
+    ["bitfinex", "neousd", "4", ""],
+    ["bitfinex", "iotusd", "4", ""],
+    ["bitfinex", "eosusd", "4", ""],
+    ["bitfinex", "dashusd", "4", ""],
+    ["bitfinex", "xmrusd", "4", ""],
+    ["bitfinex", "btgusd", "4", ""],
+    ["bitfinex", "etcusd", "4", ""],
+    ["bitfinex", "qtumusd", "4", ""]
+]

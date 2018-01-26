@@ -6,12 +6,24 @@ use Illuminate\Database\Eloquent\Model;
 
 class Ticker extends Model
 {
-    const DELIMITER = ', ';
+    const BULLISH = 'Bullish';
+    const BEARISH = 'Bearish';
+    const DELIMITER = ',';
 
-    public function compare(array $other, $field)
+    public function savePrice($price, $priceSentiment)
     {
-       $thisValue = floatval(explode(self::DELIMITER, $this[$field])[0]);
-       $otherValue = floatval(explode(self::DELIMITER, $other[$field[0]])[0]);
-       return $otherValue > $thisValue ? $otherValue / $thisValue - 1 : 1 - $thisValue / $otherValue;
+        $this->price = $price;
+        $this->price_sentiment = $priceSentiment;
+        $this->save();
+    }
+
+    public function comparePrice($price)
+    {
+        $thisPrice = floatval($this->price);
+        $otherPrice = floatval($price);
+        if ($thisPrice == 0) {
+            return $otherPrice == 0 ? 0 : ($otherPrice > 0 ? INF : - INF);
+        }
+        return $otherPrice > $thisPrice ? $otherPrice / $thisPrice - 1 : 1 - $thisPrice / $otherPrice;
     }
 }
