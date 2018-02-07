@@ -14,7 +14,7 @@
             new TradingView.widget({
                 "autosize": true,
                 "symbol": "BITFLYER:FXBTCJPY",
-                "interval": "D",
+                "interval": "3",
                 "timezone": "Asia/Tokyo",
                 "theme": "Light",
                 "style": "1",
@@ -40,11 +40,14 @@
                     "BITFINEX:QTMUSD",
                 ],
                 "details": true,
-                "hotlist": true,
-                "calendar": true,
-                "news": [
-                    "stocktwits",
-                    "headlines"
+                // "hotlist": true,
+                // "calendar": true,
+                // "news": [
+                //     "stocktwits",
+                //     "headlines"
+                // ],
+                "studies": [
+                    "MACD@tv-basicstudies"
                 ]
             });
             </script>
